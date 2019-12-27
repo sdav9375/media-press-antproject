@@ -2,7 +2,11 @@
 
 /**
  * Plugin Name: AntProject Topics/Projects
+<<<<<<< HEAD
  * Plugin URI: http://recuethemes.com
+=======
+ * Plugin URI: http://buddydev.com
+>>>>>>> 1632d957bad861b62516e3393a68cc8e3fc869a4
  * Description: This plugin extends MediaPress to support projects/topics.
  * Version: 1.0.0
  * Author: Rescuethemes
