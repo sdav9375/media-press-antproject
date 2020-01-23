@@ -64,7 +64,8 @@ class MPP_Gallery_Helper {
 		// save meta to gallery
 		add_action( 'mpp_gallery_created', array( $this, 'save_gallery_meta' ) );
 		add_action( 'mpp_gallery_updated', array( $this, 'save_gallery_meta' ), 100 );
-		
+		add_filter( 'bp_attachments_get_max_upload_file_size', array( $this, 'ant_limit_buddypress_file_size') , 10,2 );
+
 			
 		// Plugin version
 		define( 'AntProject_VER', '1.0' );
@@ -73,10 +74,17 @@ class MPP_Gallery_Helper {
 		define( 'AntProject_DIR', plugin_dir_path( __FILE__ ) );
 		
 		define( 'Topic_PostType', 'anttopic' ); 
-		define ( 'BP_AVATAR_ORIGINAL_MAX_FILESIZE', 5120000 );
 
 	}
-	  
+	
+	/**
+	 * Filter max upload size in Buddypress
+	 */
+	function ant_limit_buddypress_file_size( $size, $type ) {
+
+    	return 51200000; // 50mb
+	} 
+ 
 	/**
 	 * Add interface to the gallery
 	 */
