@@ -73,7 +73,7 @@ class MPP_Gallery_Helper {
 		define( 'AntProject_DIR', plugin_dir_path( __FILE__ ) );
 		
 		define( 'Topic_PostType', 'anttopic' ); 
-
+		define ( 'BP_AVATAR_ORIGINAL_MAX_FILESIZE', 5120000 );
 
 	}
 	  
