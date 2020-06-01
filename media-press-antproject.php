@@ -255,3 +255,138 @@ class AntProject_Walker_Nav_Menu_Checklist extends Walker_Nav_Menu {
 		}
 	}
 }
+            
+function ant_filter_notifications_get_registered_components( $component_names = array() ) {
+ 
+    // Force $component_names to be an array
+    if ( ! is_array( $component_names ) ) {
+        $component_names = array();
+    }
+ 
+    // Add 'custom' component to registered components array
+    array_push( $component_names, 'ant_project' );
+ 
+    // Return component's with 'custom' appended
+    return $component_names;
+}
+add_filter( 'bp_notifications_get_registered_components', 'ant_filter_notifications_get_registered_components' );
+
+            
+function ant_format_buddypress_notifications( $action, $item_id, $secondary_item_id, $total_items, $format = 'string' ) {
+ 
+    // New custom notifications
+    if ( 'topic_created' === $action ) {
+    
+        $post = get_post( $item_id );
+       
+        $custom_title = 'The Ant Project posted a new Topic ' . $post->post_title ;
+        $custom_link  = get_permalink( $post );
+        $custom_text = 'The Ant Project posted a new Topic ' . $post->post_title ;
+ 
+        // WordPress Toolbar
+        if ( 'string' === $format ) {
+            $return = apply_filters( 'custom_filter', '<a href="' . esc_url( $custom_link ) . '" title="' . esc_attr( $custom_title ) . '">' . esc_html( $custom_text ) . '</a>', $custom_text, $custom_link );
+ 
+        // Deprecated BuddyBar
+        } else {
+            $return = apply_filters( 'custom_filter', array(
+                'text' => $custom_text,
+                'link' => $custom_link
+            ), $custom_link, (int) $total_items, $custom_text, $custom_title );
+        }
+        
+        return $return;
+        
+    }
+    if ( 'project_comment' === $action ) {
+               
+                $gallery_id = mpp_activity_get_gallery_id( $item_id  );
+                $gallery = mpp_get_gallery( $gallery_id );
+                $user_that_commented = ant_get_display_name( $secondary_item_id );
+               
+               $custom_title = $user_that_commented . 'posted a new comment on' . $gallery->post_title ;
+               $custom_link  = bp_activity_get_permalink( $item_id );
+               $custom_text = $user_that_commented .'posted a new comment on' . $gallery->post_title ;
+        
+               // WordPress Toolbar
+               if ( 'string' === $format ) {
+                   $return = apply_filters( 'custom_filter', '<a href="' . esc_url( $custom_link ) . '" title="' . esc_attr( $custom_title ) . '">' . esc_html( $custom_text ) . '</a>', $custom_text, $custom_link );
+        
+               // Deprecated BuddyBar
+               } else {
+                   $return = apply_filters( 'custom_filter', array(
+                       'text' => $custom_text,
+                       'link' => $custom_link
+                   ), $custom_link, (int) $total_items, $custom_text, $custom_title );
+               }
+               
+               return $return;
+    }
+    
+}
+add_filter( 'bp_notifications_get_notifications_for_user', 'ant_format_buddypress_notifications', 10, 5 );
+
+function ant_custom_add_notification( $post_id, $post, $update ) {
+//     If this is a revision, don't send the email.
+    if ( wp_is_post_revision( $post_id ) )
+        return;
+    if ( $update )
+        return;
+    
+    if ( $post->post_type == 'anttopic' ) {
+        $active_users = bp_core_get_users( array("per_page"=>10000));
+        
+        foreach ( $active_users['users'] as $user ) {
+               if ( bp_is_active( 'notifications' ) ) {
+        
+                    bp_notifications_add_notification( array(
+                        'user_id'           => $user->ID,
+                        'item_id'           => $post_id,
+                        'component_name'    => 'ant_project',
+                        'component_action'  => 'topic_created',
+                        'date_notified'     => bp_core_current_time(),
+                        'is_new'            => 1,
+                    ) );
+               }
+        }
+    }
+    
+}
+add_action( 'wp_insert_post', 'ant_custom_add_notification', 99, 3 );
+
+function ant_bp_activity_custom_update($content, $user_id, $activity_id ) {
+      
+        $project_author = 0;
+        //$project_or_media_id = 0;
+       
+        $gallery_id = mpp_activity_get_gallery_id( $activity_id );
+       
+        if ( $gallery_id != 0 ) {
+             $gallery = mpp_get_gallery( $gallery_id );
+             $project_author = $gallery->post_author;
+            // $project_or_media_id = $gallery_id;
+             
+        } else {
+             $media_id = mpp_activity_get_media_id( $activity_id );
+             $media = mpp_get_media( $media_id );
+             $project_author = $media->user_id;
+            // $project_or_media_id = $media_id;
+        }
+        
+       
+    
+//        if ( $gallery ) {
+            //$original_activity = new BP_Activity_Activity( $activity_id );
+               bp_notifications_add_notification( array(
+                   'user_id'           => $project_author, // Owner of the project
+                   'item_id'           => $activity_id,
+                   'component_name'    => 'ant_project',
+                   'component_action'  => 'project_comment',
+                   'secondary_item_id' => $user_id, // This is who posted the comment
+                   'date_notified'     => bp_core_current_time(),
+                   'is_new'            => 1,
+               ) );
+//        }
+}
+//add_filter( 'bp_activity_posted_update', 'ant_bp_activity_custom_update',  10, 3 );
+
